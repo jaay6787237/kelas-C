@@ -1,0 +1,101 @@
+{
+  "entities": {
+    "Schedule": {
+      "title": "Schedule",
+      "description": "Class schedule item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "day": { "type": "string" },
+        "subject": { "type": "string" },
+        "room": { "type": "string" },
+        "lecturer": { "type": "string" },
+        "time": { "type": "string" },
+        "type": { "type": "string", "enum": ["Teori", "Praktikum"] }
+      },
+      "required": ["id", "day", "subject", "room", "lecturer", "time", "type"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Student information record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nim": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string", "enum": ["Aktif", "Cuti", "Lulus"] },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "avatar": { "type": "string" }
+      },
+      "required": ["id", "nim", "name", "status"]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "Gallery activity image item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string" }
+      },
+      "required": ["id", "title", "imageUrl", "date", "category"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Admin or system activity log record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "time": { "type": "string" },
+        "author": { "type": "string" },
+        "type": { "type": "string", "enum": ["primary", "secondary", "warning"] }
+      },
+      "required": ["id", "text", "time", "author", "type"]
+    },
+    "ClassConfig": {
+      "title": "ClassConfig",
+      "description": "General configurations of the academic class",
+      "type": "object",
+      "properties": {
+        "className": { "type": "string" },
+        "academicYear": { "type": "string" },
+        "accreditation": { "type": "string" },
+        "university": { "type": "string" },
+        "faculty": { "type": "string" },
+        "major": { "type": "string" },
+        "vision": { "type": "string" },
+        "mission": { "type": "array" },
+        "logoUrl": { "type": "string" }
+      },
+      "required": ["className", "academicYear", "accreditation", "university", "faculty", "major", "vision", "mission"]
+    }
+  },
+  "firestore": {
+    "schedules/{scheduleId}": {
+      "schema": "Schedule",
+      "description": "Class academic schedule collection"
+    },
+    "students/{studentId}": {
+      "schema": "Student",
+      "description": "Registered students database"
+    },
+    "gallery/{galleryId}": {
+      "schema": "GalleryItem",
+      "description": "Gallery images showcasing student activities"
+    },
+    "logs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "Historic changes and system operations logs"
+    },
+    "config/{configId}": {
+      "schema": "ClassConfig",
+      "description": "Class identity and basic config information"
+    }
+  }
+}

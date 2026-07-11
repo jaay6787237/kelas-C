@@ -15,6 +15,9 @@ import AboutClass from './components/AboutClass';
 import Lightbox from './components/Lightbox';
 import AdminPanel from './components/AdminPanel';
 import LoginScreen from './components/LoginScreen';
+import { db } from './lib/firebase';
+import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -38,168 +41,211 @@ export default function App() {
     return url;
   };
 
-  // Local storage synchronization and cross-tab/viewport real-time updates
+  // Firebase Firestore synchronization and real-time updates
   useEffect(() => {
-    const syncData = () => {
-      const localSch = localStorage.getItem('si_schedules');
-      const localSt = localStorage.getItem('si_students');
-      const localGal = localStorage.getItem('si_gallery');
-      const localCfg = localStorage.getItem('si_config');
-      const localLogs = localStorage.getItem('si_logs');
-
-      if (localSch) setSchedules(JSON.parse(localSch));
-      else {
-        setSchedules(INITIAL_SCHEDULES);
-        localStorage.setItem('si_schedules', JSON.stringify(INITIAL_SCHEDULES));
-      }
-
-      if (localSt) setStudents(JSON.parse(localSt));
-      else {
-        setStudents(INITIAL_STUDENTS);
-        localStorage.setItem('si_students', JSON.stringify(INITIAL_STUDENTS));
-      }
-
-      if (localGal) setGalleryItems(JSON.parse(localGal));
-      else {
-        setGalleryItems(INITIAL_GALLERY);
-        localStorage.setItem('si_gallery', JSON.stringify(INITIAL_GALLERY));
-      }
-
-      if (localCfg) {
-        const parsed = JSON.parse(localCfg);
-        let needsUpdate = false;
-        const updated = { ...parsed };
-        if (parsed.className === 'Sistem Informasi') {
-          updated.className = 'Sistem Informasi Kelas C';
-          needsUpdate = true;
+    const initializeFirebaseData = async () => {
+      try {
+        const studentsCol = collection(db, 'students');
+        const snap = await getDocs(studentsCol);
+        if (snap.empty) {
+          console.log('Firestore is empty. Seeding initial data...');
+          // Seed schedules
+          for (const s of INITIAL_SCHEDULES) {
+            await setDoc(doc(db, 'schedules', s.id), s);
+          }
+          // Seed students
+          for (const st of INITIAL_STUDENTS) {
+            await setDoc(doc(db, 'students', st.id), st);
+          }
+          // Seed gallery
+          for (const g of INITIAL_GALLERY) {
+            await setDoc(doc(db, 'gallery', g.id), g);
+          }
+          // Seed logs
+          for (const l of INITIAL_LOGS) {
+            await setDoc(doc(db, 'logs', l.id), l);
+          }
+          // Seed config
+          await setDoc(doc(db, 'config', 'class'), CLASS_CONFIG);
+          console.log('Seeding finished successfully.');
         }
-        if (parsed.academicYear === '2024') {
-          updated.academicYear = '2025';
-          needsUpdate = true;
-        }
-        if (!parsed.university || parsed.university === 'Universitas Teknologi Digital') {
-          updated.university = 'Universitas Islam Negeri Raden Intan Lampung';
-          needsUpdate = true;
-        }
-        if (!parsed.faculty || parsed.faculty === 'Fakultas Ilmu Komputer') {
-          updated.faculty = 'Fakultas Sains dan Teknologi';
-          needsUpdate = true;
-        }
-
-        if (needsUpdate) {
-          setClassConfig(updated);
-          localStorage.setItem('si_config', JSON.stringify(updated));
-        } else {
-          setClassConfig(parsed);
-        }
-      } else {
-        setClassConfig(CLASS_CONFIG);
-        localStorage.setItem('si_config', JSON.stringify(CLASS_CONFIG));
-      }
-
-      if (localLogs) setLogs(JSON.parse(localLogs));
-      else {
-        setLogs(INITIAL_LOGS);
-        localStorage.setItem('si_logs', JSON.stringify(INITIAL_LOGS));
+      } catch (err) {
+        console.error('Error during Firestore initialization/seeding:', err);
       }
     };
 
-    // Initial load
-    syncData();
+    // Run the initialization then register snapshot listeners
+    initializeFirebaseData().then(() => {
+      const unsubSchedules = onSnapshot(collection(db, 'schedules'), (snapshot) => {
+        const items: Schedule[] = [];
+        snapshot.forEach((doc) => {
+          items.push(doc.data() as Schedule);
+        });
+        setSchedules(items);
+      });
+
+      const unsubStudents = onSnapshot(collection(db, 'students'), (snapshot) => {
+        const items: Student[] = [];
+        snapshot.forEach((doc) => {
+          items.push(doc.data() as Student);
+        });
+        setStudents(items);
+      });
+
+      const unsubGallery = onSnapshot(collection(db, 'gallery'), (snapshot) => {
+        const items: GalleryItem[] = [];
+        snapshot.forEach((doc) => {
+          items.push(doc.data() as GalleryItem);
+        });
+        setGalleryItems(items);
+      });
+
+      const unsubLogs = onSnapshot(collection(db, 'logs'), (snapshot) => {
+        const items: ActivityLog[] = [];
+        snapshot.forEach((doc) => {
+          items.push(doc.data() as ActivityLog);
+        });
+        items.sort((a, b) => b.id.localeCompare(a.id));
+        setLogs(items);
+      });
+
+      const unsubConfig = onSnapshot(doc(db, 'config', 'class'), (docSnap) => {
+        if (docSnap.exists()) {
+          setClassConfig(docSnap.data() as ClassConfig);
+        }
+      });
+
+      return () => {
+        unsubSchedules();
+        unsubStudents();
+        unsubGallery();
+        unsubLogs();
+        unsubConfig();
+      };
+    });
 
     const localIsAdmin = localStorage.getItem('si_is_admin');
     if (localIsAdmin === 'true') {
       setIsAdmin(true);
     }
-
-    // Storage event listener to sync across multiple tabs/viewports in real-time
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key && e.key.startsWith('si_')) {
-        syncData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
   }, []);
 
-  // Sync state helpers
-  const handleUpdateSchedules = (updated: Schedule[]) => {
-    setSchedules(updated);
-    localStorage.setItem('si_schedules', JSON.stringify(updated));
-    const updatedLogs: ActivityLog[] = [
-      { id: `log-${Date.now()}`, text: 'Jadwal Mata Kuliah Diperbarui', time: 'Baru saja', author: 'Admin', type: 'secondary' },
-      ...logs
-    ];
-    setLogs(updatedLogs);
-    localStorage.setItem('si_logs', JSON.stringify(updatedLogs));
-  };
+  // Sync state helpers utilizing Firebase Firestore (real-time diffing & document writing)
+  const handleUpdateSchedules = async (updated: Schedule[]) => {
+    try {
+      const deleted = schedules.filter(s => !updated.some(u => u.id === s.id));
+      for (const d of deleted) {
+        await deleteDoc(doc(db, 'schedules', d.id));
+      }
+      for (const s of updated) {
+        await setDoc(doc(db, 'schedules', s.id), s);
+      }
 
-  const handleUpdateStudents = (updated: Student[]) => {
-    setStudents(updated);
-    localStorage.setItem('si_students', JSON.stringify(updated));
-    const wasAdded = updated.length > students.length;
-    const wasRemoved = updated.length < students.length;
-    let logText = 'Data Mahasiswa Diperbarui';
-    if (wasAdded) {
-      const addedStudent = updated[0];
-      logText = `Mahasiswa Baru Terdaftar: ${addedStudent.name}`;
-    } else if (wasRemoved) {
-      logText = 'Anggota Kelas Telah Dihapus';
+      const newLog: ActivityLog = { 
+        id: `log-${Date.now()}`, 
+        text: 'Jadwal Mata Kuliah Diperbarui', 
+        time: 'Baru saja', 
+        author: 'Admin', 
+        type: 'secondary' 
+      };
+      await setDoc(doc(db, 'logs', newLog.id), newLog);
+    } catch (e) {
+      console.error('Failed to update schedules in Firestore:', e);
     }
-    const updatedLogs: ActivityLog[] = [
-      { id: `log-${Date.now()}`, text: logText, time: 'Baru saja', author: 'Admin', type: 'primary' },
-      ...logs
-    ];
-    setLogs(updatedLogs);
-    localStorage.setItem('si_logs', JSON.stringify(updatedLogs));
   };
 
-  const handleUpdateGallery = (updated: GalleryItem[]) => {
-    setGalleryItems(updated);
-    localStorage.setItem('si_gallery', JSON.stringify(updated));
-    const updatedLogs: ActivityLog[] = [
-      { id: `log-${Date.now()}`, text: 'Foto Galeri Kelas Baru Ditambahkan', time: 'Baru saja', author: 'Admin', type: 'primary' },
-      ...logs
-    ];
-    setLogs(updatedLogs);
-    localStorage.setItem('si_logs', JSON.stringify(updatedLogs));
+  const handleUpdateStudents = async (updated: Student[]) => {
+    try {
+      const deleted = students.filter(st => !updated.some(u => u.id === st.id));
+      for (const d of deleted) {
+        await deleteDoc(doc(db, 'students', d.id));
+      }
+      for (const st of updated) {
+        await setDoc(doc(db, 'students', st.id), st);
+      }
+
+      const wasAdded = updated.length > students.length;
+      const wasRemoved = updated.length < students.length;
+      let logText = 'Data Mahasiswa Diperbarui';
+      if (wasAdded) {
+        const addedStudent = updated.find(st => !students.some(s => s.id === st.id)) || updated[0];
+        if (addedStudent) {
+          logText = `Mahasiswa Baru Terdaftar: ${addedStudent.name}`;
+        }
+      } else if (wasRemoved) {
+        logText = 'Anggota Kelas Telah Dihapus';
+      }
+
+      const newLog: ActivityLog = { 
+        id: `log-${Date.now()}`, 
+        text: logText, 
+        time: 'Baru saja', 
+        author: 'Admin', 
+        type: 'primary' 
+      };
+      await setDoc(doc(db, 'logs', newLog.id), newLog);
+    } catch (e) {
+      console.error('Failed to update students in Firestore:', e);
+    }
   };
 
-  const handleUpdateClassConfig = (updated: ClassConfig) => {
-    setClassConfig(updated);
-    localStorage.setItem('si_config', JSON.stringify(updated));
+  const handleUpdateGallery = async (updated: GalleryItem[]) => {
+    try {
+      const deleted = galleryItems.filter(g => !updated.some(u => u.id === g.id));
+      for (const d of deleted) {
+        await deleteDoc(doc(db, 'gallery', d.id));
+      }
+      for (const g of updated) {
+        await setDoc(doc(db, 'gallery', g.id), g);
+      }
+
+      const newLog: ActivityLog = { 
+        id: `log-${Date.now()}`, 
+        text: 'Foto Galeri Kelas Baru Ditambahkan', 
+        time: 'Baru saja', 
+        author: 'Admin', 
+        type: 'primary' 
+      };
+      await setDoc(doc(db, 'logs', newLog.id), newLog);
+    } catch (e) {
+      console.error('Failed to update gallery in Firestore:', e);
+    }
+  };
+
+  const handleUpdateClassConfig = async (updated: ClassConfig) => {
+    try {
+      await setDoc(doc(db, 'config', 'class'), updated);
+    } catch (e) {
+      console.error('Failed to update class configuration in Firestore:', e);
+    }
   };
 
   // Contacts state
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [contactSuccess, setContactSuccess] = useState(false);
 
-  const handleContactSubmit = (e: FormEvent) => {
+  const handleContactSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!contactForm.name || !contactForm.message) return;
 
-    // Send visual log to admin activity feed
-    const updatedLogs: ActivityLog[] = [
-      {
+    try {
+      const newLog: ActivityLog = {
         id: `log-${Date.now()}`,
         text: `Pesan Kontak Diterima dari ${contactForm.name}`,
         time: 'Baru saja',
         author: contactForm.email || 'Sistem',
         type: 'warning',
-      },
-      ...logs,
-    ];
-    setLogs(updatedLogs);
-    localStorage.setItem('si_logs', JSON.stringify(updatedLogs));
+      };
+      await setDoc(doc(db, 'logs', newLog.id), newLog);
 
-    setContactSuccess(true);
-    setTimeout(() => {
-      setContactSuccess(false);
-      setContactForm({ name: '', email: '', message: '' });
-    }, 4000);
+      setContactSuccess(true);
+      setTimeout(() => {
+        setContactSuccess(false);
+        setContactForm({ name: '', email: '', message: '' });
+      }, 4000);
+    } catch (error) {
+      console.error('Failed to submit contact message to Firestore:', error);
+    }
   };
 
   // Gallery view page lightbox state
