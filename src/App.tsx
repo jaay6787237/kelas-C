@@ -123,6 +123,21 @@ export default function App() {
   const handleUpdateStudents = (updated: Student[]) => {
     setStudents(updated);
     localStorage.setItem('si_students', JSON.stringify(updated));
+    const wasAdded = updated.length > students.length;
+    const wasRemoved = updated.length < students.length;
+    let logText = 'Data Mahasiswa Diperbarui';
+    if (wasAdded) {
+      const addedStudent = updated[0];
+      logText = `Mahasiswa Baru Terdaftar: ${addedStudent.name}`;
+    } else if (wasRemoved) {
+      logText = 'Anggota Kelas Telah Dihapus';
+    }
+    const updatedLogs: ActivityLog[] = [
+      { id: `log-${Date.now()}`, text: logText, time: 'Baru saja', author: 'Admin', type: 'primary' },
+      ...logs
+    ];
+    setLogs(updatedLogs);
+    localStorage.setItem('si_logs', JSON.stringify(updatedLogs));
   };
 
   const handleUpdateGallery = (updated: GalleryItem[]) => {

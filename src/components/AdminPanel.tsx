@@ -1097,7 +1097,7 @@ export default function AdminPanel({
 
               <div className="flex justify-end gap-3 mt-4 border-t border-slate-100 pt-4">
                 <button type="button" onClick={() => setShowStudentModal(false)} className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold text-xs md:text-sm cursor-pointer hover:bg-slate-50 transition-colors">Batal</button>
-                <button type="submit" className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs md:text-sm cursor-pointer shadow-md shadow-blue-500/10 active:scale-95 transition-all">Daftarkan</button>
+                <button type="submit" className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs md:text-sm cursor-pointer shadow-md shadow-blue-500/10 active:scale-95 transition-all">Tambah</button>
               </div>
             </motion.form>
           </motion.div>
