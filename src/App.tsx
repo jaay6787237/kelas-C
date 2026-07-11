@@ -18,6 +18,27 @@ import LoginScreen from './components/LoginScreen';
 import { db } from './lib/firebase';
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
+const galleryContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+    },
+  },
+};
+
+const galleryItemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: [0.215, 0.61, 0.355, 1],
+    },
+  },
+};
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -750,10 +771,16 @@ export default function App() {
                 </div>
 
                 {/* Photo Grid with Zoom Hover Effects */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <motion.div
+                  variants={galleryContainerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                >
                   {galleryItems.map((photo) => (
                     <motion.div
                       key={photo.id}
+                      variants={galleryItemVariants}
                       className="group relative bg-white rounded-2xl overflow-hidden border border-slate-200/60 shadow-md shadow-slate-100 hover:shadow-xl hover:border-primary duration-300 transition-all cursor-zoom-in h-60"
                       whileHover={{ scale: 1.02 }}
                       onClick={() => setGallerySelected(photo)}
@@ -767,7 +794,7 @@ export default function App() {
                       </div>
                     </motion.div>
                   ))}
-                </div>
+                </motion.div>
 
                 {/* Lightbox Trigger Dialog */}
                 <Lightbox

@@ -53,21 +53,82 @@ export default function AdminPanel({
   const [logoUploadMode, setLogoUploadMode] = useState<'file' | 'url'>('file');
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
 
-  const handleLogoFileChange = (file: File) => {
+  const compressImageIfNeeded = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          if (file.size <= 1024 * 1024) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          const maxDimension = 1200;
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          let quality = 0.7;
+          let resultDataUrl = canvas.toDataURL('image/jpeg', quality);
+
+          let approxSize = resultDataUrl.length * 0.75;
+          if (approxSize > 1024 * 1024) {
+            quality = 0.5;
+            resultDataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+
+          console.log(`Image compressed from ${(file.size / (1024 * 1024)).toFixed(2)}MB to ${(resultDataUrl.length * 0.75 / (1024 * 1024)).toFixed(2)}MB`);
+          alert(`Gambar berhasil dikompresi otomatis dari ${(file.size / (1024 * 1024)).toFixed(2)}MB menjadi ${(resultDataUrl.length * 0.75 / (1024 * 1024)).toFixed(2)}MB agar pas dengan penyimpanan database.`);
+          resolve(resultDataUrl);
+        };
+        img.onerror = (err) => {
+          reject(err);
+        };
+      };
+      reader.onerror = (err) => {
+        reject(err);
+      };
+    });
+  };
+
+  const handleLogoFileChange = async (file: File) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       alert('Hanya file gambar yang diperbolehkan.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        const base64Data = e.target.result as string;
-        onUpdateClassConfig({ ...classConfig, logoUrl: base64Data });
-        alert('Logo kelas berhasil diperbarui!');
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const base64Data = await compressImageIfNeeded(file);
+      onUpdateClassConfig({ ...classConfig, logoUrl: base64Data });
+      alert('Logo kelas berhasil diperbarui!');
+    } catch (err) {
+      console.error('Failed to process image:', err);
+      alert('Gagal memproses gambar logo.');
+    }
   };
 
   const getLogoSrc = (url?: string) => {
@@ -77,34 +138,34 @@ export default function AdminPanel({
     return url;
   };
 
-  const handleFileChange = (file: File) => {
+  const handleFileChange = async (file: File) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       alert('Hanya file gambar yang diperbolehkan.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        setGalleryFile(e.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressImageIfNeeded(file);
+      setGalleryFile(compressedBase64);
+    } catch (err) {
+      console.error('Failed to process image:', err);
+      alert('Gagal memproses gambar galeri.');
+    }
   };
 
-  const handleStudentAvatarFileChange = (file: File) => {
+  const handleStudentAvatarFileChange = async (file: File) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       alert('Hanya file gambar yang diperbolehkan.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        setStudentAvatarFile(e.target.result as string);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressImageIfNeeded(file);
+      setStudentAvatarFile(compressedBase64);
+    } catch (err) {
+      console.error('Failed to process image:', err);
+      alert('Gagal memproses foto profil mahasiswa.');
+    }
   };
 
   // Form submit handlers
