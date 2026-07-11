@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Schedule, Student, GalleryItem, ActivityLog, ClassConfig } from '../types';
+import defaultLogo from '../assets/images/refined_s_hexagon_logo_1783309336153.jpg';
 
 interface AdminPanelProps {
   schedules: Schedule[];
@@ -65,6 +66,13 @@ export default function AdminPanel({
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const getLogoSrc = (url?: string) => {
+    if (!url || url === '/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg' || url.startsWith('/src/')) {
+      return defaultLogo;
+    }
+    return url;
   };
 
   const handleFileChange = (file: File) => {
@@ -735,7 +743,7 @@ export default function AdminPanel({
                     />
                     {classConfig.logoUrl ? (
                       <div className="flex items-center justify-center gap-4">
-                        <img src={classConfig.logoUrl} alt="Logo Kelas" className="w-16 h-16 object-cover rounded-xl shadow-sm border border-slate-100 bg-white" />
+                        <img src={getLogoSrc(classConfig.logoUrl)} alt="Logo Kelas" className="w-16 h-16 object-cover rounded-xl shadow-sm border border-slate-100 bg-white" />
                         <div className="text-left">
                           <p className="text-xs font-bold text-slate-700">Logo Kelas Aktif</p>
                           <p className="text-[10px] text-slate-400">Klik atau seret logo baru untuk mengganti</p>

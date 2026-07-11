@@ -654,7 +654,7 @@ export default function App() {
               <div className="w-8 h-8 hexagon-mask bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
                 <img 
                   className="w-full h-full object-cover" 
-                  src="/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg" 
+                  src={getLogoSrc(classConfig.logoUrl)} 
                   alt="Footer Logo" 
                   referrerPolicy="no-referrer"
                 />
