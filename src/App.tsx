@@ -1,5 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
+import defaultLogo from './assets/images/refined_s_hexagon_logo_1783309336153.jpg';
 import { 
   INITIAL_SCHEDULES, 
   INITIAL_STUDENTS, 
@@ -28,6 +29,14 @@ export default function App() {
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [classConfig, setClassConfig] = useState<ClassConfig>({} as ClassConfig);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
+
+  // Helper to get correct logo source (resolves static asset path for production/Vercel)
+  const getLogoSrc = (url?: string) => {
+    if (!url || url === '/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg' || url.startsWith('/src/')) {
+      return defaultLogo;
+    }
+    return url;
+  };
 
   // Local storage synchronization
   useEffect(() => {
@@ -255,7 +264,7 @@ export default function App() {
               <img 
                 style={{ width: '48px', height: '48px' }}
                 className="object-cover animate-pulse-slow" 
-                src={classConfig.logoUrl || '/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg'} 
+                src={getLogoSrc(classConfig.logoUrl)} 
                 alt="Logo S Hexagon"
                 referrerPolicy="no-referrer"
               />
@@ -447,7 +456,7 @@ export default function App() {
                       <div className="w-full h-full hexagon-mask bg-slate-50 flex items-center justify-center overflow-hidden">
                         <img 
                           className="w-full h-full object-cover"
-                          src={classConfig.logoUrl || '/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg'}
+                          src={getLogoSrc(classConfig.logoUrl)}
                           alt="Logo Kelas S Hexagon"
                           referrerPolicy="no-referrer"
                         />
