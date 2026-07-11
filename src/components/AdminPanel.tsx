@@ -39,28 +39,62 @@ export default function AdminPanel({
 
   // New item forms state
   const [newGal, setNewGal] = useState({ title: '', description: '', category: 'Akademik', imageUrl: '' });
+  const [galleryFile, setGalleryFile] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
   const [newSch, setNewSch] = useState({ day: 'Senin', subject: '', room: '', lecturer: '', time: '', type: 'Teori' as Schedule['type'] });
   const [newStudent, setNewStudent] = useState({ nim: '', name: '', role: '', status: 'Aktif' as Student['status'], email: '', phone: '', avatar: '' });
 
   // Filter query for tab contents
   const [studentSearch, setStudentSearch] = useState('');
 
+  const handleFileChange = (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Hanya file gambar yang diperbolehkan.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setGalleryFile(e.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Form submit handlers
   const handleAddGallery = (e: FormEvent) => {
     e.preventDefault();
     if (!newGal.title || !newGal.description) return;
+
+    let finalImageUrl = 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800';
+    if (uploadMode === 'file') {
+      if (!galleryFile) {
+        alert('Silakan pilih berkas foto untuk diunggah.');
+        return;
+      }
+      finalImageUrl = galleryFile;
+    } else {
+      if (!newGal.imageUrl) {
+        alert('Silakan masukkan tautan URL gambar.');
+        return;
+      }
+      finalImageUrl = newGal.imageUrl;
+    }
 
     const added: GalleryItem = {
       id: `gal-${Date.now()}`,
       title: newGal.title,
       description: newGal.description,
       category: newGal.category,
-      imageUrl: newGal.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800',
+      imageUrl: finalImageUrl,
       date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
     };
 
     onUpdateGallery([added, ...galleryItems]);
     setNewGal({ title: '', description: '', category: 'Akademik', imageUrl: '' });
+    setGalleryFile(null);
     setShowGalModal(false);
   };
 
@@ -658,10 +692,100 @@ export default function AdminPanel({
                 <input type="text" placeholder="Contoh: Akademik, Organisasi, Kegiatan..." required value={newGal.category} onChange={(e) => setNewGal({ ...newGal, category: e.target.value })} className="p-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary" />
               </div>
 
+              {/* Mode Selector for Uploading / URL */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-400 uppercase">Gambar URL (Hotlink URL)</label>
-                <input type="text" placeholder="https://images.unsplash.com/..." required value={newGal.imageUrl} onChange={(e) => setNewGal({ ...newGal, imageUrl: e.target.value })} className="p-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary" />
+                <label className="text-xs font-bold text-slate-400 uppercase">Metode Input Gambar</label>
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setUploadMode('file')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                      uploadMode === 'file'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Upload Berkas Foto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMode('url')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                      uploadMode === 'url'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Gunakan Link URL
+                  </button>
+                </div>
               </div>
+
+              {/* Dynamic Image Input Element */}
+              {uploadMode === 'file' ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase">Pilih Berkas Foto</label>
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                      isDragging ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary hover:bg-slate-50'
+                    }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      if (e.dataTransfer.files?.[0]) {
+                        handleFileChange(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    onClick={() => {
+                      document.getElementById('gallery-file-input')?.click();
+                    }}
+                  >
+                    <input
+                      id="gallery-file-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleFileChange(e.target.files[0]);
+                        }
+                      }}
+                    />
+                    {galleryFile ? (
+                      <div className="relative group max-w-xs mx-auto">
+                        <img src={galleryFile} alt="Preview" className="w-full h-32 object-cover rounded-lg shadow-sm" />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setGalleryFile(null);
+                          }}
+                          className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow-md transition-all"
+                        >
+                          <span className="material-symbols-outlined text-xs flex items-center justify-center">close</span>
+                        </button>
+                        <p className="text-[10px] text-slate-500 mt-2 font-bold">Klik atau seret gambar baru untuk mengganti</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 py-2">
+                        <span className="material-symbols-outlined text-3xl text-slate-400">cloud_upload</span>
+                        <p className="text-xs font-bold text-slate-700">Pilih berkas foto atau seret ke sini</p>
+                        <p className="text-[10px] text-slate-400">Mendukung PNG, JPG, JPEG, WEBP hingga 5MB</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase">Gambar URL (Hotlink URL)</label>
+                  <input type="text" placeholder="https://images.unsplash.com/..." value={newGal.imageUrl} onChange={(e) => setNewGal({ ...newGal, imageUrl: e.target.value })} className="p-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary" />
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-400 uppercase">Keterangan / Keterangan Singkat</label>
