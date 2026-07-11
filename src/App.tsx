@@ -130,6 +130,25 @@ export default function App() {
     }
   }, []);
 
+  // Helper to recursively remove undefined properties for Firestore
+  const cleanObject = (obj: any): any => {
+    if (obj === undefined) return null;
+    if (obj === null) return null;
+    if (Array.isArray(obj)) {
+      return obj.map(cleanObject);
+    }
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const key of Object.keys(obj)) {
+        if (obj[key] !== undefined) {
+          cleaned[key] = cleanObject(obj[key]);
+        }
+      }
+      return cleaned;
+    }
+    return obj;
+  };
+
   // Sync state helpers utilizing Firebase Firestore (real-time diffing & document writing)
   const handleUpdateSchedules = async (updated: Schedule[]) => {
     try {
@@ -137,8 +156,13 @@ export default function App() {
       for (const d of deleted) {
         await deleteDoc(doc(db, 'schedules', d.id));
       }
-      for (const s of updated) {
-        await setDoc(doc(db, 'schedules', s.id), s);
+      const changed = updated.filter(u => {
+        const existing = schedules.find(s => s.id === u.id);
+        if (!existing) return true;
+        return JSON.stringify(existing) !== JSON.stringify(u);
+      });
+      for (const s of changed) {
+        await setDoc(doc(db, 'schedules', s.id), cleanObject(s));
       }
 
       const newLog: ActivityLog = { 
@@ -148,7 +172,7 @@ export default function App() {
         author: 'Admin', 
         type: 'secondary' 
       };
-      await setDoc(doc(db, 'logs', newLog.id), newLog);
+      await setDoc(doc(db, 'logs', newLog.id), cleanObject(newLog));
     } catch (e) {
       console.error('Failed to update schedules in Firestore:', e);
     }
@@ -160,8 +184,13 @@ export default function App() {
       for (const d of deleted) {
         await deleteDoc(doc(db, 'students', d.id));
       }
-      for (const st of updated) {
-        await setDoc(doc(db, 'students', st.id), st);
+      const changed = updated.filter(u => {
+        const existing = students.find(s => s.id === u.id);
+        if (!existing) return true;
+        return JSON.stringify(existing) !== JSON.stringify(u);
+      });
+      for (const st of changed) {
+        await setDoc(doc(db, 'students', st.id), cleanObject(st));
       }
 
       const wasAdded = updated.length > students.length;
@@ -183,7 +212,7 @@ export default function App() {
         author: 'Admin', 
         type: 'primary' 
       };
-      await setDoc(doc(db, 'logs', newLog.id), newLog);
+      await setDoc(doc(db, 'logs', newLog.id), cleanObject(newLog));
     } catch (e) {
       console.error('Failed to update students in Firestore:', e);
     }
@@ -195,8 +224,13 @@ export default function App() {
       for (const d of deleted) {
         await deleteDoc(doc(db, 'gallery', d.id));
       }
-      for (const g of updated) {
-        await setDoc(doc(db, 'gallery', g.id), g);
+      const changed = updated.filter(u => {
+        const existing = galleryItems.find(g => g.id === u.id);
+        if (!existing) return true;
+        return JSON.stringify(existing) !== JSON.stringify(u);
+      });
+      for (const g of changed) {
+        await setDoc(doc(db, 'gallery', g.id), cleanObject(g));
       }
 
       const newLog: ActivityLog = { 
@@ -206,7 +240,7 @@ export default function App() {
         author: 'Admin', 
         type: 'primary' 
       };
-      await setDoc(doc(db, 'logs', newLog.id), newLog);
+      await setDoc(doc(db, 'logs', newLog.id), cleanObject(newLog));
     } catch (e) {
       console.error('Failed to update gallery in Firestore:', e);
     }
@@ -214,7 +248,7 @@ export default function App() {
 
   const handleUpdateClassConfig = async (updated: ClassConfig) => {
     try {
-      await setDoc(doc(db, 'config', 'class'), updated);
+      await setDoc(doc(db, 'config', 'class'), cleanObject(updated));
     } catch (e) {
       console.error('Failed to update class configuration in Firestore:', e);
     }
