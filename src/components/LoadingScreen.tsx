@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import defaultLogo from '../assets/images/refined_s_hexagon_logo_1783309336153.jpg';
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -51,9 +52,14 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
             <motion.div
               id="loader-logo"
               className="relative w-28 h-28 flex items-center justify-center mb-8"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: [0.9, 1.05, 1], opacity: 1 }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse' }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 80,
+                damping: 12,
+                duration: 1
+              }}
             >
               {/* Outer Glowing Rings */}
               <div className="absolute inset-0 bg-[#3fa9f5]/20 rounded-full blur-2xl animate-pulse"></div>
@@ -63,7 +69,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
                 <div className="w-full h-full hexagon-mask bg-slate-50 flex items-center justify-center overflow-hidden">
                   <img 
                     className="w-full h-full object-cover animate-pulse"
-                    src="/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg"
+                    src={defaultLogo}
                     alt="Loading Logo"
                     referrerPolicy="no-referrer"
                   />
