@@ -505,7 +505,7 @@ export default function App() {
 
             {/* VIEW ROUTE: TENTANG KELAS */}
             {activePage === 'tentang-kelas' && (
-              <AboutClass galleryItems={galleryItems} />
+              <AboutClass galleryItems={galleryItems} students={students} />
             )}
 
             {/* VIEW ROUTE: JADWAL KULIAH */}
@@ -701,21 +701,16 @@ export default function App() {
               <span>Fakultas Sains dan Teknologi Tower 1 UIN Raden Intan Lampung</span>
             </div>
             
-            <div className="flex items-center gap-3.5 mt-5">
+            <div className="flex flex-col gap-3 mt-4">
               <a 
                 href="https://saintek.radenintan.ac.id" 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                title="saintek.radenintan.ac.id"
-                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm"
+                title="Saintek UIN RIL"
+                className="flex items-center gap-2 text-slate-400 hover:text-primary transition-all text-xs font-semibold"
               >
-                <span className="material-symbols-outlined text-base">public</span>
-              </a>
-              <a href="mailto:admin@si-hexagon.ac.id" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                <span className="material-symbols-outlined text-base">mail</span>
-              </a>
-              <a href="#" className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm">
-                <span className="material-symbols-outlined text-base">call</span>
+                <span className="material-symbols-outlined text-base shrink-0">public</span>
+                <span>https://saintek.radenintan.ac.id</span>
               </a>
             </div>
           </div>

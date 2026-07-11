@@ -32,14 +32,13 @@ export default function LoginScreen({ onLoginSuccess, onCancel }: LoginScreenPro
     setIsLoading(true);
 
     // Simulate authenticating against the database/accounts
-    // Matching the Laravel seeders created earlier: admin / password123
     setTimeout(() => {
       setIsLoading(false);
       
       const normalizedUsername = username.trim().toLowerCase();
       const isCorrectAccount = 
-        (normalizedUsername === 'admin' || normalizedUsername === 'admin@si-hexagon.ac.id') && 
-        password === 'password123';
+        (normalizedUsername === 'sispo25c') && 
+        password === 'CFORCOMPACCT';
 
       if (isCorrectAccount) {
         setIsSuccess(true);
@@ -49,7 +48,7 @@ export default function LoginScreen({ onLoginSuccess, onCancel }: LoginScreenPro
           onLoginSuccess();
         }, 1500);
       } else {
-        setError('Kredensial login salah. Gunakan username "admin" dan password "password123".');
+        setError('Kredensial login salah. Silakan coba lagi.');
       }
     }, 1200);
   };
@@ -228,26 +227,7 @@ export default function LoginScreen({ onLoginSuccess, onCancel }: LoginScreenPro
           </motion.button>
         </form>
 
-        {/* Credentials Tip Card */}
-        <div className="mt-5 pt-3.5 border-t border-slate-800/40">
-          <div className="p-3 bg-slate-950/20 border border-slate-800/30 rounded-xl">
-            <h4 className="text-[10px] font-bold text-slate-300 mb-0.5 flex items-center gap-1">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
-              Informasi Akun Default Admin
-            </h4>
-            <p className="text-[10px] text-slate-400 leading-relaxed mb-2">
-              Gunakan kredensial berikut untuk masuk sebagai pengelola:
-            </p>
-            <div className="grid grid-cols-2 gap-1.5 text-[9px] font-mono bg-slate-950/50 p-2 rounded-lg border border-slate-800/40">
-              <div>
-                <span className="text-slate-500">Username:</span> <span className="text-slate-200 font-bold">admin</span>
-              </div>
-              <div>
-                <span className="text-slate-500">Password:</span> <span className="text-slate-200 font-bold">password123</span>
-              </div>
-            </div>
-          </div>
-        </div>
+
       </motion.div>
     </div>
   );

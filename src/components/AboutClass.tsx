@@ -1,14 +1,80 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
-import { GalleryItem } from '../types';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Instagram, ChevronLeft, ChevronRight } from 'lucide-react';
+import { GalleryItem, Student } from '../types';
 import Lightbox from './Lightbox';
+import lendraAvatar from '../assets/images/lendra_class_leader.jpg';
+import maleGroup from '../assets/images/male_students_group_1783752225853.jpg';
+import femaleGroup from '../assets/images/female_students_group_1783752241370.jpg';
 
 interface AboutClassProps {
   galleryItems: GalleryItem[];
+  students: Student[];
 }
 
-export default function AboutClass({ galleryItems }: AboutClassProps) {
+export default function AboutClass({ galleryItems, students }: AboutClassProps) {
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [[page, direction], setPage] = useState([0, 0]);
+  const classPhotos = [maleGroup, femaleGroup];
+  const currentPhotoIdx = page;
+
+  const filteredMembers = students.filter(
+    (member) =>
+      member.name.toLowerCase().includes(memberSearch.toLowerCase()) ||
+      member.nim.includes(memberSearch)
+  );
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPage((prev) => [(prev[0] + 1) % classPhotos.length, 1]);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [classPhotos.length]);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPage(([prevPage]) => [
+      (prevPage - 1 + classPhotos.length) % classPhotos.length,
+      -1
+    ]);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPage(([prevPage]) => [
+      (prevPage + 1) % classPhotos.length,
+      1
+    ]);
+  };
+
+  const slideVariants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? '100%' : dir < 0 ? '-100%' : '0%',
+      opacity: 0,
+      scale: 1.12,
+      rotateY: dir > 0 ? 12 : dir < 0 ? -12 : 0,
+    }),
+    center: {
+      x: '0%',
+      opacity: 1,
+      scale: 1,
+      rotateY: 0,
+    },
+    exit: (dir: number) => ({
+      x: dir < 0 ? '100%' : dir > 0 ? '-100%' : '0%',
+      opacity: 0,
+      scale: 0.88,
+      rotateY: dir < 0 ? 12 : dir > 0 ? -12 : 0,
+    })
+  };
+
+  const slideTransition = {
+    x: { type: 'spring', stiffness: 240, damping: 28 },
+    opacity: { duration: 0.4 },
+    scale: { duration: 0.5, ease: 'easeInOut' },
+    rotateY: { type: 'spring', stiffness: 200, damping: 26 }
+  };
 
   return (
     <div className="w-full relative">
@@ -40,7 +106,7 @@ export default function AboutClass({ galleryItems }: AboutClassProps) {
               className="glass-card p-5 sm:p-6 rounded-2xl flex flex-col gap-2 border-primary/20 shadow-lg flex-1 min-w-[150px] xs:min-w-[200px]"
               whileHover={{ y: -5, boxShadow: '0 20px 25px -5px rgba(0,99,153,0.1)' }}
             >
-              <span className="text-primary font-black text-3xl sm:text-4xl font-mono">48</span>
+              <span className="text-primary font-black text-3xl sm:text-4xl font-mono">{students.length}</span>
               <span className="text-slate-400 font-bold text-[10px] sm:text-xs tracking-wider uppercase font-sans">
                 JUMLAH MAHASISWA
               </span>
@@ -59,20 +125,65 @@ export default function AboutClass({ galleryItems }: AboutClassProps) {
 
         {/* Right Side Parallax Hexagon Media Frame */}
         <motion.div
-          className="lg:col-span-5 relative w-full max-w-md mx-auto lg:max-w-none"
+          className="lg:col-span-5 relative w-full max-w-md mx-auto lg:max-w-none select-none"
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
         >
-          <div className="aspect-square hexagon-mask bg-slate-200 relative overflow-hidden group shadow-2xl soft-glow">
-            <img
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLuud095ESdIwNwbl2GQRwEXULa8WfFG5b12sbuszoh7iDAgBVqMzfPEhtX-JnPCcPgdjzojzecT3Bb9PuKDDnnB3NDVQQsShC3lfbnD9X8-3UTd6attHh9hvyZIR5Dsx67rLvonxXLkDK5A8xc4VBddremdE9h6xq85wW50JnvYhE8TBJBxUEndWyM2uidg3K7CP6yuSWcpqoyFXIEQ7QQwUmaAsTx4FPSCh46ULHt-zDi7P8B2Rj"
-              alt="SI Academic Life"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#006399]/40 to-transparent" />
+          <div className="aspect-square hexagon-mask bg-slate-200 relative overflow-hidden group shadow-2xl soft-glow" style={{ perspective: 1200 }}>
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <motion.img
+                key={currentPhotoIdx}
+                src={classPhotos[currentPhotoIdx]}
+                alt={`SI Academic Life - ${currentPhotoIdx + 1}`}
+                className="absolute inset-0 w-full h-full object-cover"
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={slideTransition}
+                referrerPolicy="no-referrer"
+              />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#006399]/30 to-transparent pointer-events-none" />
+
+            {/* Navigation buttons inside the frame */}
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <button
+                onClick={handlePrev}
+                className="w-9 h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 backdrop-blur-sm transition-all pointer-events-auto"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleNext}
+                className="w-9 h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 backdrop-blur-sm transition-all pointer-events-auto"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Page indicator dots */}
+            <div className="absolute bottom-5 inset-x-0 flex justify-center gap-1.5 z-10">
+              {classPhotos.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newDirection = idx > currentPhotoIdx ? 1 : -1;
+                    setPage([idx, newDirection]);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    idx === currentPhotoIdx ? 'bg-[#3fa9f5] w-5' : 'bg-white/40 hover:bg-white'
+                  }`}
+                  aria-label={`Slide ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
           <div className="absolute -bottom-6 -right-6 w-32 h-32 hexagon-mask bg-secondary/10 backdrop-blur-sm -z-10 animate-float-medium"></div>
         </motion.div>
@@ -132,7 +243,7 @@ export default function AboutClass({ galleryItems }: AboutClassProps) {
               <div className="absolute inset-0 bg-[#3fa9f5]/10 rounded-full blur-md group-hover:scale-110 transition-transform duration-500"></div>
               <div className="w-28 h-28 hexagon-mask bg-slate-200 relative overflow-hidden shadow-lg border border-[#3fa9f5]/25">
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrd-cu5BX7sY1fTiPnJdYYxrXs4qgWmfCzVlsrcjd3oswM2rLMM9sSIHV6H8tKpwHEoQR5eGH4uGtKlQLUKX3RhRz61OTJARh6Lpx8beR4XL1h1QNQKxZNiTxi_QsWmNMRa2zgUIhS4Ep-mhWNj4MsFu6zW3rqPhF-dhDSsikeCGSyVoVGyu3Asj4UZgp-m-wS-b33m35V0XuIdRzZ-GwDdI8nGd1QezUJm02Aie5KOJyUy24FwMER"
+                  src={lendraAvatar}
                   alt="Lendra Portrait"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   referrerPolicy="no-referrer"
@@ -153,18 +264,13 @@ export default function AboutClass({ galleryItems }: AboutClassProps) {
               </div>
               <div className="flex gap-2 justify-center mt-2">
                 <motion.a
-                  href="mailto:lendra@si-hexagon.ac.id"
-                  className="w-8.5 h-8.5 rounded-full border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all cursor-pointer shadow-sm"
+                  href="https://www.instagram.com/syailendraalladuni?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8.5 h-8.5 rounded-full border border-[#E1306C]/20 flex items-center justify-center text-[#E1306C] hover:bg-[#E1306C] hover:text-white transition-all cursor-pointer shadow-sm"
                   whileHover={{ scale: 1.1 }}
                 >
-                  <span className="material-symbols-outlined text-[17px]">mail</span>
-                </motion.a>
-                <motion.a
-                  href="#"
-                  className="w-8.5 h-8.5 rounded-full border border-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all cursor-pointer shadow-sm"
-                  whileHover={{ scale: 1.1 }}
-                >
-                  <span className="material-symbols-outlined text-[17px]">link</span>
+                  <Instagram size={15} />
                 </motion.a>
               </div>
             </div>
@@ -242,7 +348,7 @@ export default function AboutClass({ galleryItems }: AboutClassProps) {
                 <span className="material-symbols-outlined text-[32px]">groups</span>
               </div>
               <div>
-                <span className="block text-2xl font-black text-slate-900 font-mono">48 Mahasiswa</span>
+                <span className="block text-2xl font-black text-slate-900 font-mono">{students.length} Mahasiswa</span>
                 <span className="text-slate-400 font-bold text-[10px] tracking-wider uppercase font-sans">
                   Total Angkatan Aktif
                 </span>
@@ -276,61 +382,117 @@ export default function AboutClass({ galleryItems }: AboutClassProps) {
         </div>
       </section>
 
-      {/* Dynamic Gallery with Hover Zoom and Lightbox Trigger */}
+      {/* Profil Anggota Kelas Grid with Search and Filter */}
       <section className="mb-20">
         <motion.div
-          className="mb-10 text-center md:text-left"
+          className="mb-10 text-center md:text-left flex flex-col md:flex-row md:items-end md:justify-between gap-6"
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <div className="inline-block px-4 py-1 bg-primary-container/20 text-[#006399] rounded-full text-xs font-bold font-sans mb-3 tracking-widest uppercase">
-            GALERI KELAS
+          <div>
+            <div className="inline-block px-4 py-1 bg-primary-container/20 text-[#006399] rounded-full text-xs font-bold font-sans mb-3 tracking-widest uppercase">
+              PROFIL ANGGOTA KELAS
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-900">Mengenal Anggota Kelas SI C 2025</h2>
+            <p className="text-slate-500 text-sm mt-2 leading-relaxed max-w-2xl font-sans">
+              Daftar mahasiswa aktif, pengurus kelas, serta divisi fungsional yang bersinergi dalam program studi Sistem Informasi.
+            </p>
           </div>
-          <h2 className="text-3xl font-extrabold text-slate-900">Aktivitas & Kolaborasi Dokumentasi</h2>
-          <p className="text-slate-500 text-sm mt-2 leading-relaxed">
-            Merekam jejak kebersamaan, riset laboratorium, kunjungan industri, dan momen prestasi kelas kami.
-          </p>
+
+          {/* Search bar */}
+          <div className="w-full md:w-80 flex gap-2">
+            <div className="relative flex-1">
+              <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+              <input
+                type="text"
+                placeholder="Cari nama atau NIM..."
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200/80 rounded-xl text-xs sm:text-sm bg-white/75 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
+              />
+            </div>
+            {memberSearch && (
+              <button
+                onClick={() => setMemberSearch('')}
+                className="px-3 py-2 border border-slate-200 text-slate-500 rounded-xl hover:bg-slate-50 text-xs font-semibold"
+              >
+                Reset
+              </button>
+            )}
+          </div>
         </motion.div>
 
-        {/* Gallery Grid showing Hover Zoom */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {galleryItems.map((photo, index) => (
-            <motion.div
-              key={photo.id}
-              className="group relative bg-white rounded-2xl overflow-hidden border border-slate-200/60 shadow-md shadow-slate-100 hover:shadow-xl hover:border-primary duration-300 transition-all cursor-zoom-in h-64"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: (index % 4) * 0.1 }}
-              onClick={() => setSelectedImage(photo)}
-            >
-              {/* Image Frame */}
-              <div className="w-full h-full overflow-hidden relative">
-                <img
-                  src={photo.imageUrl}
-                  alt={photo.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                {/* Immersive backdrop vignette overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                
-                {/* Slide-up text caption box */}
-                <div className="absolute bottom-0 inset-x-0 p-5 transform translate-y-6 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end text-white text-left">
-                  <span className="text-[9px] font-mono tracking-widest uppercase text-blue-300 mb-1">
-                    {photo.category} // {photo.date}
-                  </span>
-                  <h4 className="text-sm font-bold truncate leading-snug">{photo.title}</h4>
-                  <p className="text-[10px] text-slate-300 line-clamp-1 mt-1 font-sans">
-                    {photo.description}
-                  </p>
+        {/* Small, compact Grid for class members */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <AnimatePresence mode="popLayout">
+            {filteredMembers.map((member, index) => (
+              <motion.div
+                key={member.id}
+                layout
+                className="group bg-white rounded-2xl p-4 border border-slate-200/60 shadow-sm hover:shadow-md hover:border-primary/40 duration-300 transition-all text-center flex flex-col items-center relative overflow-hidden"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3, delay: Math.min(index * 0.03, 0.3) }}
+              >
+                {/* Background soft glow decoration on hover */}
+                <div className="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-primary/5 blur-xl group-hover:scale-150 transition-transform duration-500 pointer-events-none" />
+
+                {/* Compact profile photo */}
+                <div className="w-16 h-16 relative mb-3 flex items-center justify-center shrink-0">
+                  <div className="absolute inset-0 bg-primary/10 rounded-full blur-sm group-hover:scale-110 transition-transform duration-300"></div>
+                  <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden relative border border-slate-200 shadow-inner z-10">
+                    <img
+                      src={member.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                      alt={member.name}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  {/* Status dot */}
+                  <span className={`absolute bottom-0 right-1 w-3.5 h-3.5 border-2 border-white rounded-full z-20 ${
+                    member.status === 'Aktif' ? 'bg-emerald-500' : member.status === 'Cuti' ? 'bg-amber-500' : 'bg-slate-400'
+                  }`} title={`Status: ${member.status}`} />
                 </div>
-              </div>
-            </motion.div>
-          ))}
+
+                {/* Name */}
+                <h4 className="text-xs sm:text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-primary transition-colors mb-0.5" title={member.name}>
+                  {member.name}
+                </h4>
+
+                {/* NIM */}
+                <span className="text-[10px] font-mono text-slate-400 font-semibold mb-2">
+                  {member.nim}
+                </span>
+
+                {/* Role badges */}
+                {member.role ? (
+                  <span className="mt-auto px-2 py-0.5 bg-primary/5 text-primary text-[9px] font-bold rounded-md tracking-wide max-w-full truncate">
+                    {member.role}
+                  </span>
+                ) : (
+                  <span className="mt-auto px-2 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-medium rounded-md tracking-wide">
+                    Mahasiswa
+                  </span>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
+
+        {filteredMembers.length === 0 && (
+          <motion.div
+            className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200 mt-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">group_off</span>
+            <p className="text-slate-500 text-sm font-medium">Anggota kelas tidak ditemukan</p>
+            <p className="text-xs text-slate-400 mt-1">Coba masukkan nama atau NIM yang berbeda.</p>
+          </motion.div>
+        )}
       </section>
 
       {/* Lightbox dialog rendering with animation */}

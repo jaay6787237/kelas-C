@@ -45,6 +45,8 @@ export default function AdminPanel({
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
   const [newSch, setNewSch] = useState({ day: 'Senin', subject: '', room: '', lecturer: '', time: '', type: 'Teori' as Schedule['type'] });
   const [newStudent, setNewStudent] = useState({ nim: '', name: '', role: '', status: 'Aktif' as Student['status'], email: '', phone: '', avatar: '' });
+  const [studentAvatarFile, setStudentAvatarFile] = useState<string | null>(null);
+  const [isDraggingStudentAvatar, setIsDraggingStudentAvatar] = useState(false);
 
   // Filter query for tab contents
   const [studentSearch, setStudentSearch] = useState('');
@@ -85,6 +87,21 @@ export default function AdminPanel({
     reader.onload = (e) => {
       if (e.target?.result) {
         setGalleryFile(e.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleStudentAvatarFileChange = (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Hanya file gambar yang diperbolehkan.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setStudentAvatarFile(e.target.result as string);
       }
     };
     reader.readAsDataURL(file);
@@ -146,7 +163,9 @@ export default function AdminPanel({
 
   const handleAddStudent = (e: FormEvent) => {
     e.preventDefault();
-    if (!newStudent.name || !newStudent.nim || !newStudent.email) return;
+    if (!newStudent.name || !newStudent.nim) return;
+
+    const generatedEmail = `${newStudent.nim}@si-hexagon.ac.id`;
 
     const added: Student = {
       id: `st-${Date.now()}`,
@@ -154,13 +173,14 @@ export default function AdminPanel({
       name: newStudent.name,
       role: newStudent.role || undefined,
       status: newStudent.status,
-      email: newStudent.email,
-      phone: newStudent.phone || undefined,
-      avatar: newStudent.avatar || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150`
+      email: generatedEmail,
+      phone: undefined,
+      avatar: studentAvatarFile || newStudent.avatar || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?w=150`
     };
 
     onUpdateStudents([added, ...students]);
     setNewStudent({ nim: '', name: '', role: '', status: 'Aktif', email: '', phone: '', avatar: '' });
+    setStudentAvatarFile(null);
     setShowStudentModal(false);
   };
 
@@ -291,13 +311,8 @@ export default function AdminPanel({
           </div>
           
           <div className="flex items-center gap-4 self-end sm:self-auto shrink-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-300 overflow-hidden border border-[#bfc7d2]/60 shadow-inner">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYJ20c2ilmAvk8spxQDtFDBYsQ0EVzvSqsHdxKCC4PWHGv22JN0KoZjSt2u81esSpkgpqnjX-8-79cZfs0KNnqvQGq0YStvZB-oeshgXU0K--dU7ICTIfpCWEh5g1aZZ2mwdN_icC3t1RBIa2KtUJBDA8pJ0V2vOuYzDl8Ilisj9UVfPjFYpSdI5hUgL7V3r-UiQ5cV6z5D_21WxR21UyZt4cjinR-oRh9Qy-ByT2WjCMxR1wv-ERs"
-                alt="IT Admin headshot"
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner" title="Administrator">
+              <span className="material-symbols-outlined text-lg sm:text-xl font-bold">admin_panel_settings</span>
             </div>
           </div>
         </header>
@@ -582,7 +597,6 @@ export default function AdminPanel({
                       <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">Mahasiswa</th>
                       <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">NIM</th>
                       <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">Jabatan / Peran</th>
-                      <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider">Email</th>
                       <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider text-center">Status</th>
                       <th className="py-3 px-4 font-bold text-xs uppercase tracking-wider text-center">Aksi</th>
                     </tr>
@@ -598,7 +612,6 @@ export default function AdminPanel({
                         <td className="py-3.5 px-4 text-xs font-semibold text-slate-500">
                           {st.role || <span className="text-slate-300 font-normal">Anggota Kelas</span>}
                         </td>
-                        <td className="py-3.5 px-4 text-xs">{st.email}</td>
                         <td className="py-3.5 px-4 text-center">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
                             st.status === 'Aktif' ? 'bg-green-50 text-green-700 border border-green-100' :
@@ -1020,15 +1033,65 @@ export default function AdminPanel({
                 <input type="text" placeholder="Contoh: Divisi Kehumasan, Anggota Kelas..." value={newStudent.role} onChange={(e) => setNewStudent({ ...newStudent, role: e.target.value })} className="p-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-400 uppercase">Email Mahasiswa</label>
-                  <input type="email" placeholder="sarah@si-hexagon.ac.id" required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="p-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary text-xs" />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-400 uppercase">No. Handphone (Opsional)</label>
-                  <input type="text" placeholder="0812-xxxx-xxxx" value={newStudent.phone} onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })} className="p-3 border border-slate-200 rounded-xl text-sm focus:ring-1 focus:ring-primary" />
+              {/* Foto Profil / Avatar Upload Area */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase">Foto Profil Anggota (Opsional)</label>
+                <div
+                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                    isDraggingStudentAvatar ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary hover:bg-slate-50'
+                  }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDraggingStudentAvatar(true);
+                  }}
+                  onDragLeave={() => setIsDraggingStudentAvatar(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingStudentAvatar(false);
+                    if (e.dataTransfer.files?.[0]) {
+                      handleStudentAvatarFileChange(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  onClick={() => {
+                    document.getElementById('student-avatar-file-input')?.click();
+                  }}
+                >
+                  <input
+                    id="student-avatar-file-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        handleStudentAvatarFileChange(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  {studentAvatarFile ? (
+                    <div className="flex items-center gap-3 text-left">
+                      <img src={studentAvatarFile} alt="Preview Avatar" className="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-700 truncate">Foto Terunggah</p>
+                        <p className="text-[10px] text-slate-400 font-mono">Format Base64 didukung</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setStudentAvatarFile(null);
+                        }}
+                        className="px-2.5 py-1.5 text-xs text-rose-500 hover:bg-rose-50 rounded-lg transition-colors font-bold animate-pulse"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center py-2">
+                      <span className="material-symbols-outlined text-slate-400 text-3xl mb-1">upload_file</span>
+                      <p className="text-xs font-bold text-slate-600">Klik atau seret berkas foto ke sini</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">Mendukung format PNG, JPG, atau JPEG</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

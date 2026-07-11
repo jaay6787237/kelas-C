@@ -1,5 +1,6 @@
 import { Announcement, Schedule, Student, GalleryItem, ActivityLog, ClassConfig } from './types';
 import defaultLogo from './assets/images/refined_s_hexagon_logo_1783309336153.jpg';
+import lendraAvatar from './assets/images/lendra_class_leader.jpg';
 
 export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   {
@@ -121,7 +122,7 @@ export const INITIAL_STUDENTS: Student[] = [
     status: 'Aktif',
     email: 'lendra@si-hexagon.ac.id',
     phone: '0812-3456-7890',
-    avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBrd-cu5BX7sY1fTiPnJdYYxrXs4qgWmfCzVlsrcjd3oswM2rLMM9sSIHV6H8tKpwHEoQR5eGH4uGtKlQLUKX3RhRz61OTJARh6Lpx8beR4XL1h1QNQKxZNiTxi_QsWmNMRa2zgUIhS4Ep-mhWNj4MsFu6zW3rqPhF-dhDSsikeCGSyVoVGyu3Asj4UZgp-m-wS-b33m35V0XuIdRzZ-GwDdI8nGd1QezUJm02Aie5KOJyUy24FwMER'
+    avatar: lendraAvatar
   },
   {
     id: 'st2',
