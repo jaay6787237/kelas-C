@@ -149,6 +149,34 @@ export default function App() {
     return obj;
   };
 
+  // Helper to add a log and ensure we only keep the 5 latest ones in Firestore
+  const addLogAndPrune = async (newLog: ActivityLog) => {
+    try {
+      // 1. Save the new log
+      await setDoc(doc(db, 'logs', newLog.id), cleanObject(newLog));
+
+      // 2. Fetch all logs to prune older ones
+      const querySnapshot = await getDocs(collection(db, 'logs'));
+      const allLogs: ActivityLog[] = [];
+      querySnapshot.forEach((doc) => {
+        allLogs.push(doc.data() as ActivityLog);
+      });
+
+      // Sort logs descending (newest first)
+      allLogs.sort((a, b) => b.id.localeCompare(a.id));
+
+      // Keep only top 5, delete the rest
+      if (allLogs.length > 5) {
+        const logsToDelete = allLogs.slice(5);
+        for (const logToDelete of logsToDelete) {
+          await deleteDoc(doc(db, 'logs', logToDelete.id));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to add and prune logs in Firestore:', e);
+    }
+  };
+
   // Sync state helpers utilizing Firebase Firestore (real-time diffing & document writing)
   const handleUpdateSchedules = async (updated: Schedule[]) => {
     try {
@@ -172,7 +200,7 @@ export default function App() {
         author: 'Admin', 
         type: 'secondary' 
       };
-      await setDoc(doc(db, 'logs', newLog.id), cleanObject(newLog));
+      await addLogAndPrune(newLog);
     } catch (e) {
       console.error('Failed to update schedules in Firestore:', e);
     }
@@ -212,7 +240,7 @@ export default function App() {
         author: 'Admin', 
         type: 'primary' 
       };
-      await setDoc(doc(db, 'logs', newLog.id), cleanObject(newLog));
+      await addLogAndPrune(newLog);
     } catch (e) {
       console.error('Failed to update students in Firestore:', e);
     }
@@ -240,7 +268,7 @@ export default function App() {
         author: 'Admin', 
         type: 'primary' 
       };
-      await setDoc(doc(db, 'logs', newLog.id), cleanObject(newLog));
+      await addLogAndPrune(newLog);
     } catch (e) {
       console.error('Failed to update gallery in Firestore:', e);
     }
@@ -270,7 +298,7 @@ export default function App() {
         author: contactForm.email || 'Sistem',
         type: 'warning',
       };
-      await setDoc(doc(db, 'logs', newLog.id), newLog);
+      await addLogAndPrune(newLog);
 
       setContactSuccess(true);
       setTimeout(() => {
