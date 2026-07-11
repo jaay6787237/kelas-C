@@ -38,74 +38,91 @@ export default function App() {
     return url;
   };
 
-  // Local storage synchronization
+  // Local storage synchronization and cross-tab/viewport real-time updates
   useEffect(() => {
-    const localSch = localStorage.getItem('si_schedules');
-    const localSt = localStorage.getItem('si_students');
-    const localGal = localStorage.getItem('si_gallery');
-    const localCfg = localStorage.getItem('si_config');
-    const localLogs = localStorage.getItem('si_logs');
+    const syncData = () => {
+      const localSch = localStorage.getItem('si_schedules');
+      const localSt = localStorage.getItem('si_students');
+      const localGal = localStorage.getItem('si_gallery');
+      const localCfg = localStorage.getItem('si_config');
+      const localLogs = localStorage.getItem('si_logs');
 
-    if (localSch) setSchedules(JSON.parse(localSch));
-    else {
-      setSchedules(INITIAL_SCHEDULES);
-      localStorage.setItem('si_schedules', JSON.stringify(INITIAL_SCHEDULES));
-    }
-
-    if (localSt) setStudents(JSON.parse(localSt));
-    else {
-      setStudents(INITIAL_STUDENTS);
-      localStorage.setItem('si_students', JSON.stringify(INITIAL_STUDENTS));
-    }
-
-    if (localGal) setGalleryItems(JSON.parse(localGal));
-    else {
-      setGalleryItems(INITIAL_GALLERY);
-      localStorage.setItem('si_gallery', JSON.stringify(INITIAL_GALLERY));
-    }
-
-    if (localCfg) {
-      const parsed = JSON.parse(localCfg);
-      let needsUpdate = false;
-      const updated = { ...parsed };
-      if (parsed.className === 'Sistem Informasi') {
-        updated.className = 'Sistem Informasi Kelas C';
-        needsUpdate = true;
-      }
-      if (parsed.academicYear === '2024') {
-        updated.academicYear = '2025';
-        needsUpdate = true;
-      }
-      if (!parsed.university || parsed.university === 'Universitas Teknologi Digital') {
-        updated.university = 'Universitas Islam Negeri Raden Intan Lampung';
-        needsUpdate = true;
-      }
-      if (!parsed.faculty || parsed.faculty === 'Fakultas Ilmu Komputer') {
-        updated.faculty = 'Fakultas Sains dan Teknologi';
-        needsUpdate = true;
+      if (localSch) setSchedules(JSON.parse(localSch));
+      else {
+        setSchedules(INITIAL_SCHEDULES);
+        localStorage.setItem('si_schedules', JSON.stringify(INITIAL_SCHEDULES));
       }
 
-      if (needsUpdate) {
-        setClassConfig(updated);
-        localStorage.setItem('si_config', JSON.stringify(updated));
+      if (localSt) setStudents(JSON.parse(localSt));
+      else {
+        setStudents(INITIAL_STUDENTS);
+        localStorage.setItem('si_students', JSON.stringify(INITIAL_STUDENTS));
+      }
+
+      if (localGal) setGalleryItems(JSON.parse(localGal));
+      else {
+        setGalleryItems(INITIAL_GALLERY);
+        localStorage.setItem('si_gallery', JSON.stringify(INITIAL_GALLERY));
+      }
+
+      if (localCfg) {
+        const parsed = JSON.parse(localCfg);
+        let needsUpdate = false;
+        const updated = { ...parsed };
+        if (parsed.className === 'Sistem Informasi') {
+          updated.className = 'Sistem Informasi Kelas C';
+          needsUpdate = true;
+        }
+        if (parsed.academicYear === '2024') {
+          updated.academicYear = '2025';
+          needsUpdate = true;
+        }
+        if (!parsed.university || parsed.university === 'Universitas Teknologi Digital') {
+          updated.university = 'Universitas Islam Negeri Raden Intan Lampung';
+          needsUpdate = true;
+        }
+        if (!parsed.faculty || parsed.faculty === 'Fakultas Ilmu Komputer') {
+          updated.faculty = 'Fakultas Sains dan Teknologi';
+          needsUpdate = true;
+        }
+
+        if (needsUpdate) {
+          setClassConfig(updated);
+          localStorage.setItem('si_config', JSON.stringify(updated));
+        } else {
+          setClassConfig(parsed);
+        }
       } else {
-        setClassConfig(parsed);
+        setClassConfig(CLASS_CONFIG);
+        localStorage.setItem('si_config', JSON.stringify(CLASS_CONFIG));
       }
-    } else {
-      setClassConfig(CLASS_CONFIG);
-      localStorage.setItem('si_config', JSON.stringify(CLASS_CONFIG));
-    }
 
-    if (localLogs) setLogs(JSON.parse(localLogs));
-    else {
-      setLogs(INITIAL_LOGS);
-      localStorage.setItem('si_logs', JSON.stringify(INITIAL_LOGS));
-    }
+      if (localLogs) setLogs(JSON.parse(localLogs));
+      else {
+        setLogs(INITIAL_LOGS);
+        localStorage.setItem('si_logs', JSON.stringify(INITIAL_LOGS));
+      }
+    };
+
+    // Initial load
+    syncData();
 
     const localIsAdmin = localStorage.getItem('si_is_admin');
     if (localIsAdmin === 'true') {
       setIsAdmin(true);
     }
+
+    // Storage event listener to sync across multiple tabs/viewports in real-time
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith('si_')) {
+        syncData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Sync state helpers
