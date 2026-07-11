@@ -47,6 +47,25 @@ export default function AdminPanel({
 
   // Filter query for tab contents
   const [studentSearch, setStudentSearch] = useState('');
+  const [logoUploadMode, setLogoUploadMode] = useState<'file' | 'url'>('file');
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+
+  const handleLogoFileChange = (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Hanya file gambar yang diperbolehkan.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        const base64Data = e.target.result as string;
+        onUpdateClassConfig({ ...classConfig, logoUrl: base64Data });
+        alert('Logo kelas berhasil diperbarui!');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleFileChange = (file: File) => {
     if (!file) return;
@@ -648,6 +667,99 @@ export default function AdminPanel({
                     className="p-3 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
+              </div>
+
+              {/* Logo Kelas Upload Section */}
+              <div className="flex flex-col gap-3 mb-6 p-5 border border-slate-100 rounded-2xl bg-slate-50/50">
+                <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-lg">image</span> Logo Kelas
+                </h4>
+                
+                {/* Method selector */}
+                <div className="flex bg-slate-100 p-1 rounded-xl max-w-sm">
+                  <button
+                    type="button"
+                    onClick={() => setLogoUploadMode('file')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                      logoUploadMode === 'file'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Upload Berkas Foto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLogoUploadMode('url')}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                      logoUploadMode === 'url'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Gunakan Link URL
+                  </button>
+                </div>
+
+                {logoUploadMode === 'file' ? (
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                      isDraggingLogo ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary hover:bg-slate-50'
+                    }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingLogo(true);
+                    }}
+                    onDragLeave={() => setIsDraggingLogo(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingLogo(false);
+                      if (e.dataTransfer.files?.[0]) {
+                        handleLogoFileChange(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    onClick={() => {
+                      document.getElementById('logo-file-input')?.click();
+                    }}
+                  >
+                    <input
+                      id="logo-file-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleLogoFileChange(e.target.files[0]);
+                        }
+                      }}
+                    />
+                    {classConfig.logoUrl ? (
+                      <div className="flex items-center justify-center gap-4">
+                        <img src={classConfig.logoUrl} alt="Logo Kelas" className="w-16 h-16 object-cover rounded-xl shadow-sm border border-slate-100 bg-white" />
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-slate-700">Logo Kelas Aktif</p>
+                          <p className="text-[10px] text-slate-400">Klik atau seret logo baru untuk mengganti</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 py-1">
+                        <span className="material-symbols-outlined text-2xl text-slate-400">upload_file</span>
+                        <p className="text-xs font-bold text-slate-700">Pilih berkas logo atau seret ke sini</p>
+                        <p className="text-[9px] text-slate-400">Mendukung PNG, JPG, JPEG, WEBP</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="https://example.com/logo.png"
+                      value={classConfig.logoUrl || ''}
+                      onChange={(e) => onUpdateClassConfig({ ...classConfig, logoUrl: e.target.value })}
+                      className="flex-1 p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-primary bg-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2 mb-6">

@@ -236,5 +236,6 @@ export const CLASS_CONFIG: ClassConfig = {
     'Menghasilkan penelitian inovatif berstandar internasional yang bermanfaat bagi perkembangan industri teknologi.',
     'Melakukan pengabdian masyarakat guna mengimplementasikan solusi digital yang berdampak nyata.',
     'Membina kolaborasi industri yang erat guna mempersiapkan lulusan langsung terjun secara kompetitif.'
-  ]
+  ],
+  logoUrl: '/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg'
 };

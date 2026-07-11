@@ -58,4 +58,5 @@ export interface ClassConfig {
   major: string;
   vision: string;
   mission: string[];
+  logoUrl?: string;
 }

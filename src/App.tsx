@@ -255,7 +255,7 @@ export default function App() {
               <img 
                 style={{ width: '48px', height: '48px' }}
                 className="object-cover animate-pulse-slow" 
-                src="/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg" 
+                src={classConfig.logoUrl || '/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg'} 
                 alt="Logo S Hexagon"
                 referrerPolicy="no-referrer"
               />
@@ -447,7 +447,7 @@ export default function App() {
                       <div className="w-full h-full hexagon-mask bg-slate-50 flex items-center justify-center overflow-hidden">
                         <img 
                           className="w-full h-full object-cover"
-                          src="/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg"
+                          src={classConfig.logoUrl || '/src/assets/images/refined_s_hexagon_logo_1783309336153.jpg'}
                           alt="Logo Kelas S Hexagon"
                           referrerPolicy="no-referrer"
                         />
