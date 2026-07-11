@@ -1,0 +1,6 @@
+{
+  "name": "Sistem Informasi",
+  "description": "Portal Akademik dan Admin Panel Interaktif Sistem Informasi 2024 dengan Animasi Premium.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
